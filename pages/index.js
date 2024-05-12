@@ -1,23 +1,33 @@
-import Head from 'next/head'
-import Header from '@components/Header'
-import Footer from '@components/Footer'
+const express = require('express');
+const { client } = require("@gradio/client");
 
-export default function Home() {
-  return (
-    <div className="container">
-      <Head>
-        <title>Next.js Starter!</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+const app = express();
+const port = process.env.PORT || 3000;
 
-      <main>
-        <Header title="Welcome to my app!" />
-        <p className="description">
-          Get started by editing <code>pages/index.js</code>
-        </p>
-      </main>
+app.use(express.json());
 
-      <Footer />
-    </div>
-  )
-}
+app.get('/predict', async (req, res) => {
+  try {
+    const { message } = req.query;
+
+    if (!message) {
+      return res.status(400).json({ error: 'Message is required' });
+    }
+
+    const result = await app.predict("/chat", [
+      message,
+      "Hello!!", // Assuming this is your system prompt
+      512, // Max New Tokens
+      0 // Temperature
+    ]);
+
+    res.json(result.data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
