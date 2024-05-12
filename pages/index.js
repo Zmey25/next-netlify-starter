@@ -1,33 +1,28 @@
-const express = require('express');
-const { client } = require("@gradio/client");
+import { useEffect, useState } from 'react';
+import { client } from '@gradio/client';
 
-const app = express();
-const port = process.env.PORT || 3000;
+export default function Home() {
+  const [predictionResult, setPredictionResult] = useState(null);
 
-app.use(express.json());
-
-app.get('/predict', async (req, res) => {
-  try {
-    const { message } = req.query;
-
-    if (!message) {
-      return res.status(400).json({ error: 'Message is required' });
+  useEffect(() => {
+    async function fetchData() {
+      const app = await client('gnumanth/llama3-chat');
+      const result = await app.predict('/chat', [
+        'Hello!!', // string in 'parameter_1' Textbox component
+        'Hello!!', // string in 'System Prompt' Textbox component
+        512, // number (numeric value between 512 and 4096) in 'Max New Tokens' Slider component
+        0, // number (numeric value between 0 and 1) in 'Temperature' Slider component
+      ]);
+      setPredictionResult(result.data);
     }
+    fetchData();
+  }, []);
 
-    const result = await app.predict("/chat", [
-      message,
-      "Hello!!", // Assuming this is your system prompt
-      512, // Max New Tokens
-      0 // Temperature
-    ]);
-
-    res.json(result.data);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+  return (
+    <div>
+      <h1>Next.js with Gradio Client</h1>
+      <p>Prediction Result:</p>
+      <pre>{JSON.stringify(predictionResult, null, 2)}</pre>
+    </div>
+  );
+}
